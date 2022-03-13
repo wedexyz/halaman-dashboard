@@ -23,7 +23,8 @@
   
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css"
   integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
-
+  
+  <link rel="stylesheet" href="https://js.arcgis.com/4.22/esri/themes/light/main.css" />
   
 </head>
 
@@ -227,7 +228,7 @@
       
       <div class="row mt-4">
 
-        <div class="col-lg-12 mb-lg-0 mb-4">
+        <div class="col-lg-4 mb-lg-0 mb-4">
           <div class="card z-index-2">
             <div class="card-body p-3">
               <div >
@@ -247,7 +248,18 @@
               </div>
             </div>
         </div>
-        
+        <div class="col-lg-8 mb-lg-0 mb-4">
+          <div class="card z-index-2">
+            <div class="card-body p-3"id="viewDiv" style="height: 850px;">
+              <div >
+            
+              
+              
+               
+                </div>
+              </div>
+            </div>
+        </div>
    
         </div>
         
@@ -663,7 +675,185 @@ aria-hidden="true" >
 <script src="clientjs/hiden.js"></script>
 <script src="clientjs/reset.js"></script>
 <script src="clientjs/loading.js"></script>
+<!---arc gis-->
+<script>
+  var dojoConfig = {
+    packages: [
+      {
+        name: "geolocate",
+        location: "//2gis.github.io/mock-geolocation/dist",
+        main: "geolocate"
+      }
+    ]
+  };
+</script>
+<script src="https://js.arcgis.com/4.22/"></script>
 
+<script>
+  require([
+    "geolocate", // geolocation simulator (https://github.com/2gis/mock-geolocation)
+    "esri/widgets/Track",
+    "esri/views/SceneView",
+    "esri/Map"
+  ], (geolocate, Track, SceneView, Map) => {
+    // geolocation simulator
+    stubGeolocation();
+
+    const map = new Map({
+      basemap: "topo-vector"
+    });
+
+    const view = new SceneView({
+      map: map,
+      container: "viewDiv",
+      center: [-117.187038, 34.057322],
+      zoom: 18,
+      ui: {
+        components: ["attribution"] // replace default set of UI components
+      }
+    });
+
+    const track = new Track({
+      view: view,
+      goToLocationEnabled: false // disable this since we want to control what happens after our location is acquired
+    });
+    view.ui.add(track, "top-left");
+
+    view.when(() => {
+      let prevLocation = view.center;
+
+      track.on("track", () => {
+        const location = track.graphic.geometry;
+
+        view.goTo({
+          center: location,
+          tilt: 50,
+          scale: 2500,
+          heading: 360 - getHeading(location, prevLocation),  // only applies to SceneView
+          rotation: 360 - getHeading(location, prevLocation) // only applies to MapView
+        }).catch((error) => {
+          if (error.name != "AbortError"){
+            console.error(error);
+          }
+        });
+
+        prevLocation = location.clone();
+      });
+
+      track.start();
+    });
+
+    function getHeading(point, oldPoint) {
+      // get angle between two points
+      const angleInDegrees = (Math.atan2(point.y - oldPoint.y, point.x - oldPoint.x) * 180) / Math.PI;
+
+      // move heading north
+      return -90 + angleInDegrees;
+    }
+
+    // geolocation simulator
+    function stubGeolocation() {
+      let coords = [
+          {
+            lat: 34.05648363780692,
+            lng: -117.19565501782613
+          },
+          {
+            lng: -117.19565880345007,
+            lat: 34.05682230352545
+          },
+          {
+            lng: -117.19566258907402,
+            lat: 34.05716096924398
+          },
+          {
+            lng: -117.19566637469796,
+            lat: 34.05749963496251
+          },
+          {
+            lng: -117.19567016032191,
+            lat: 34.05783830068104
+          },
+          {
+            lng: -117.19567394594586,
+            lat: 34.05817696639957
+          },
+          {
+            lng: -117.1956777315698,
+            lat: 34.0585156321181
+          },
+          {
+            lng: -117.19568151719375,
+            lat: 34.05885429783663
+          },
+          {
+            lng: -117.1956853028177,
+            lat: 34.05919296355516
+          },
+          {
+            lat: 34.059192963555134,
+            lng: -117.19568530281771
+          },
+          {
+            lat: 34.05920092649827,
+            lng: -117.19575894615099
+          },
+          {
+            lng: -117.19575574232981,
+            lat: 34.058861053180614
+          },
+          {
+            lng: -117.19575253850863,
+            lat: 34.05852117986296
+          },
+          {
+            lng: -117.19574933468745,
+            lat: 34.0581813065453
+          },
+          {
+            lng: -117.19574613086627,
+            lat: 34.057841433227644
+          },
+          {
+            lng: -117.19574292704509,
+            lat: 34.05750155990999
+          },
+          {
+            lng: -117.19573972322391,
+            lat: 34.05716168659233
+          },
+          {
+            lng: -117.19573651940273,
+            lat: 34.056821813274674
+          },
+          {
+            lng: -117.19573331558155,
+            lat: 34.05648193995702
+          },
+          {
+            lat: 34.05648193995701,
+            lng: -117.19573331558153
+          },
+          {
+            lng: -117.19569416670383,
+            lat: 34.056482788881965
+          },
+          {
+            lng: -117.19565501782613,
+            lat: 34.05648363780692
+          }
+        ],
+        currentCoordIndex = 0;
+
+      geolocate.use();
+
+      setInterval(() => {
+        geolocate.change(coords[currentCoordIndex]);
+        currentCoordIndex = (currentCoordIndex + 1) % coords.length;
+      }, 1500);
+    }
+  });
+</script>
 
 
 
@@ -716,7 +906,7 @@ $(document).ready(function () {
   var gyro = db.ref("/Gyro");;
   var tes = db.ref("/Test");;
   var coba = db.ref("/Coba");
-/*
+
   db.ref("/Jarak").on('value', snap => document.getElementById("db1").innerHTML= snap.val());
   db.ref("/Jarak").on('value', snap => document.getElementById("db11").innerHTML= snap.val());
   db.ref("/Gyro").on('value', snap => document.getElementById("data2").innerHTML= snap.val());
@@ -726,7 +916,7 @@ $(document).ready(function () {
   db.ref("/Coba").on('value', snap => document.getElementById("data4").innerHTML= snap.val());
   db.ref("/Coba").on('value', snap => document.getElementById("data41").innerHTML= snap.val());
 
- */
+ 
 
 
   var usersRef = dbRef.ref('users')
@@ -969,7 +1159,7 @@ var chartSpeed = Highcharts.chart('container-speed', Highcharts.merge(gaugeOptio
     min: 0,
     max: 200,
     title: {
-      text: 'Anemometer'
+      text: 'Speed'
     }
   },
 
@@ -978,17 +1168,17 @@ var chartSpeed = Highcharts.chart('container-speed', Highcharts.merge(gaugeOptio
   },
 
   series: [{
-    name: 'Anemometer',
-    data: [0],
+    name: 'Speed',
+    data: [80],
     dataLabels: {
       format:
         '<div style="text-align:center">' +
         '<span style="font-size:25px">{y}</span><br/>' +
-        '<span style="font-size:12px;opacity:0.4">RPM</span>' +
+        '<span style="font-size:12px;opacity:0.4">km/h</span>' +
         '</div>'
     },
     tooltip: {
-      valueSuffix: ' RPM'
+      valueSuffix: ' km/h'
     }
   }]
 
@@ -1000,7 +1190,7 @@ var chartSpeed2 = Highcharts.chart('container-speed2', Highcharts.merge(gaugeOpt
     min: 0,
     max: 200,
     title: {
-      text: 'Gyro'
+      text: 'Speed'
     }
   },
 
@@ -1009,13 +1199,13 @@ var chartSpeed2 = Highcharts.chart('container-speed2', Highcharts.merge(gaugeOpt
   },
 
   series: [{
-    name: 'Gyro',
+    name: 'Speed',
     data: [80],
     dataLabels: {
       format:
         '<div style="text-align:center">' +
         '<span style="font-size:25px">{y}</span><br/>' +
-        '<span style="font-size:12px;opacity:0.4">Derajat</span>' +
+        '<span style="font-size:12px;opacity:0.4">km/h</span>' +
         '</div>'
     },
     tooltip: {
@@ -1025,11 +1215,12 @@ var chartSpeed2 = Highcharts.chart('container-speed2', Highcharts.merge(gaugeOpt
 
 }));
 
+
 // The RPM gauge
 var chartRpm = Highcharts.chart('container-rpm', Highcharts.merge(gaugeOptions2, {
   yAxis: {
     min: 0,
-    max: 20,
+    max: 5,
     title: {
       text: 'RPM'
     }
@@ -1037,7 +1228,7 @@ var chartRpm = Highcharts.chart('container-rpm', Highcharts.merge(gaugeOptions2,
 
   series: [{
     name: 'RPM',
-    data: [0],
+    data: [1],
     dataLabels: {
       format:
         '<div style="text-align:center">' +
@@ -1057,7 +1248,7 @@ var chartRpm = Highcharts.chart('container-rpm', Highcharts.merge(gaugeOptions2,
 var chartRpm2 = Highcharts.chart('container-rpm2', Highcharts.merge(gaugeOptions2, {
   yAxis: {
     min: 0,
-    max: 20,
+    max: 5,
     title: {
       text: 'RPM'
     }
@@ -1065,7 +1256,7 @@ var chartRpm2 = Highcharts.chart('container-rpm2', Highcharts.merge(gaugeOptions
 
   series: [{
     name: 'RPM',
-    data: [0],
+    data: [1],
     dataLabels: {
       format:
         '<div style="text-align:center">' +
@@ -1092,15 +1283,8 @@ setInterval(function () {
 
   if (chartSpeed) {
     point = chartSpeed.series[0].points[0];
-    angin.on("value", function(snapshot) {
-            visits=  (snapshot.val());
-            inc = (snapshot.val());
-            document.getElementById("db1").innerHTML= snapshot.val();
-            document.getElementById("db11").innerHTML= snapshot.val();
-            newVal =  parseFloat(inc);
-                });
-    
-  
+    inc = Math.round((Math.random() - 0.5) * 100);
+    newVal = point.y + inc;
 
     if (newVal < 0 || newVal > 200) {
       newVal = point.y - inc;
@@ -1111,13 +1295,8 @@ setInterval(function () {
 
   if (chartSpeed2) {
     point = chartSpeed2.series[0].points[0];
-    gyro.on("value", function(snapshot) {
-    inc = (snapshot.val());
-    document.getElementById("data2").innerHTML= snapshot.val();
-    document.getElementById("data21").innerHTML= snapshot.val();
-    newVal =  parseFloat(inc);
-                });
-   
+    inc = Math.round((Math.random() - 0.5) * 100);
+    newVal = point.y + inc;
 
     if (newVal < 0 || newVal > 200) {
       newVal = point.y - inc;
@@ -1129,26 +1308,24 @@ setInterval(function () {
   // RPM
   if (chartRpm) {
     point = chartRpm.series[0].points[0];
-    tes.on("value", function(snapshot) {
-    inc = (snapshot.val());
-    document.getElementById("data3").innerHTML= snapshot.val();
-    document.getElementById("data31").innerHTML= snapshot.val();
-    newVal =  parseFloat(inc);
-                });
-  
+    inc = Math.random() - 0.5;
+    newVal = point.y + inc;
+
+    if (newVal < 0 || newVal > 5) {
+      newVal = point.y - inc;
+    }
 
     point.update(newVal);
   }
  // RPM
  if (chartRpm2) {
     point = chartRpm2.series[0].points[0];
-    coba.on("value", function(snapshot) {
-    inc = (snapshot.val());
-    document.getElementById("data4").innerHTML= snapshot.val();
-    document.getElementById("data41").innerHTML= snapshot.val();
-    newVal =  parseFloat(inc);
-                });
-  
+    inc = Math.random() - 0.5;
+    newVal = point.y + inc;
+
+    if (newVal < 0 || newVal > 5) {
+      newVal = point.y - inc;
+    }
 
     point.update(newVal);
   }
