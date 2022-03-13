@@ -181,15 +181,15 @@ z-index: 2;
 
 }
 .highcharts-figure .chart-container {
-  width: 300px;
+  width: 350px;
   height: 200px;
   float: left;
 }
 
 .highcharts-figure,
 .highcharts-data-table table {
-  width: 500px;
-  margin: 0 auto;
+  width: 700px;
+  margin:  auto;
 }
 
 .highcharts-data-table table {
@@ -199,7 +199,7 @@ z-index: 2;
   margin: 10px auto;
   text-align: center;
   width: 100%;
-  max-width: 500px;
+  max-width: 600px;
 }
 
 .highcharts-data-table caption {
